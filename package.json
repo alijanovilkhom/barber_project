@@ -1,0 +1,11 @@
+{
+  "name": "barber-booking",
+  "private": true,
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "dev": "npm run dev --workspace @barber/web",
+    "build": "npm run build --workspace @barber/web",
+    "lint": "npm run lint --workspace @barber/web",
+    "typecheck": "npm run typecheck --workspace @barber/web"
+  }
+}
