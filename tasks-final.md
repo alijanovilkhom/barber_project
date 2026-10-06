@@ -428,7 +428,7 @@ Edge Function `notifications` опубликована и запускается
 
 ## Задачи
 
-- [ ] Загрузить репозиторий в GitHub.
+- [x] Загрузить репозиторий в GitHub: commit `6793ad8` отправлен в `main`.
 - [ ] Создать Vercel project для `apps/web`.
 - [ ] Создать Vercel project для `apps/miniapp`.
 - [ ] Создать Vercel project для `apps/api`.
@@ -461,7 +461,7 @@ API
 
 а Supabase хранит данные и выполняет фоновые задачи.
 
-Для Vercel добавлены настройки трёх приложений и инструкция в `DEPLOYMENT.md`. Supabase Function `notifications` развернута, проверена и защищена секретом; Cron активен. Создать Vercel-проекты и развернуть сайт/API/Mini App пока не удалось: Vercel CLI не авторизован в аккаунте.
+Для Vercel добавлены настройки трёх приложений и инструкция в `DEPLOYMENT.md`. Сборки сайта, API, Mini App и генерация Prisma Client проходят. Репозиторий опубликован в GitHub. Supabase Function `notifications` развернута, авторизованный запрос успешен, Vault настроен, Cron активен. Создать Vercel-проекты и получить production URL пока не удалось: Vercel CLI не авторизован в аккаунте.
 
 ---
 
