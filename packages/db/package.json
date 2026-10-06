@@ -1,0 +1,29 @@
+{
+  "name": "@barber/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/client.ts"
+  },
+  "scripts": {
+    "generate": "prisma generate",
+    "validate": "prisma validate",
+    "migrate": "prisma migrate deploy",
+    "seed": "prisma db seed",
+    "verify": "tsx src/verify.ts",
+    "studio": "prisma studio",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "prisma": "^7.10.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "dotenv": "^17.4.2"
+  }
+}

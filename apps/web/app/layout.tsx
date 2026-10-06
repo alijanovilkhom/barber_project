@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import "@fontsource-variable/onest/index.css";
+import "@fontsource/prata/400.css";
 import "./globals.css";
+import "./design.css";
 
 export const metadata: Metadata = {
   title: "BRAVO — барбершоп в Ташкенте",
@@ -7,5 +10,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="ru"><body>{children}</body></html>;
+  return <html lang="ru" suppressHydrationWarning><head><script dangerouslySetInnerHTML={{ __html: `try{var theme=localStorage.getItem("bravo-theme");if(theme==="dark"||theme==="light")document.documentElement.dataset.theme=theme;}catch{}` }} /></head><body>{children}</body></html>;
 }

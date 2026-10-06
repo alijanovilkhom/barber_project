@@ -1,45 +1,100 @@
+import Image from "next/image";
 import Link from "next/link";
-import { ArrowDown, ArrowRight, ArrowUpRight, Clock3, MapPin, Scissors, Star } from "lucide-react";
-import { barbers, formatPrice, reviews, services } from "@/lib/data";
+import { ArrowDown, ArrowUpRight, Clock3, MapPin, Phone } from "lucide-react";
+import { formatPrice } from "@/lib/data";
+import { getBarbers, getServices } from "@/lib/api";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { HeroVideo } from "@/components/hero-video";
+import { ReviewRail } from "@/components/review-rail";
 
-export default function Home() {
+const yandexMapUrl = "https://yandex.com/maps/10335/tashkent/house/YkAYdAJpQEEAQFprfX54cXliZA%3D%3D/";
+const yandexRouteUrl = "https://yandex.com/maps/10335/tashkent/?rtext=~41.290511%2C69.259947&rtt=auto";
+const yandexEmbedUrl = "https://yandex.com/map-widget/v1/?ll=69.259947%2C41.290511&z=16&pt=69.259947%2C41.290511%2Cpm2rdm&lang=ru_RU";
+
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const [services, barbers] = await Promise.all([getServices(), getBarbers()]);
   return <>
-    <SiteHeader />
-    <main id="top">
-      <section className="hero">
-        <div className="hero-image" />
-        <div className="hero-shade" />
-        <div className="container hero-content">
-          <div className="eyebrow hero-eyebrow"><span className="eyebrow-line" /> БАРБЕРШОП В ТАШКЕНТЕ</div>
-          <h1>Твой стиль.<br /><em>Наше дело.</em></h1>
-          <p>Место, где мастерство встречается с характером. Приходите за стрижкой. Возвращайтесь за ощущением.</p>
-          <div className="hero-actions"><Link href="/book" className="button button-gold button-large">Записаться онлайн <ArrowUpRight size={19} /></Link><a href="#services" className="text-link">Посмотреть услуги <ArrowRight size={17} /></a></div>
-          <div className="hero-bottom"><span>ТОЧНОСТЬ В КАЖДОЙ ДЕТАЛИ</span><a href="#about" aria-label="Прокрутить вниз"><ArrowDown size={18} /></a><span>EST. 2026 · TASHKENT</span></div>
+    <SiteHeader overlayHero />
+    <main id="top" className="home-main">
+      <section className="hero" aria-labelledby="hero-title">
+        <HeroVideo />
+        <div className="hero-copy">
+          <div className="hero-copy-inner">
+            <span className="eyebrow"><span className="eyebrow-line" /> BARBERSHOP · TASHKENT</span>
+            <h1 id="hero-title">BRAVO.<br /><em>Точность</em><br />в характере.</h1>
+            <p>Стрижки и уход за бородой с вниманием к форме, деталям и вашему времени.</p>
+            <div className="hero-actions">
+              <Link href="/book" className="button button-primary button-large">Записаться онлайн <ArrowUpRight size={18} /></Link>
+            </div>
+          </div>
+          <div className="hero-foot"><a href="#about" aria-label="К следующему разделу"><ArrowDown size={18} /></a></div>
         </div>
       </section>
 
-      <section id="about" className="intro section-padding">
-        <div className="container intro-grid"><div><span className="eyebrow"><span className="eyebrow-line" /> НАША ФИЛОСОФИЯ</span><h2>Больше, чем<br /><em>просто стрижка.</em></h2></div><div className="intro-copy"><p>Мы верим, что уверенность начинается с деталей. Поэтому слушаем, советуем и работаем до тех пор, пока результат не станет вашим.</p><div className="intro-stats"><div><strong>01</strong><span>Индивидуальный подход</span></div><div><strong>100%</strong><span>Внимания к деталям</span></div></div></div></div>
+      <section id="about" className="intro section-padding" aria-labelledby="about-title">
+        <div className="container intro-grid">
+          <div className="section-kicker"><span className="eyebrow"><span className="eyebrow-line" /> НАШ ПОДХОД</span><span className="section-index">01 — 06</span></div>
+          <div className="intro-main"><h2 id="about-title">Хорошая стрижка<br />говорит <em>за вас.</em></h2><div className="intro-bottom"><p>Мы начинаем с разговора и заканчиваем тогда, когда форма сидит безупречно. Спокойный сервис, точная работа и время, посвящённое только вам.</p><span>Мастерство без лишнего шума.</span></div></div>
+        </div>
       </section>
 
-      <section id="services" className="services-section section-padding">
-        <div className="container"><div className="section-head"><div><span className="eyebrow"><span className="eyebrow-line" /> ЧТО МЫ ДЕЛАЕМ</span><h2>Наши <em>услуги</em></h2></div><p>Только то, в чём мы действительно хороши. Каждая услуга — время для себя.</p></div><div className="service-list">{services.map(service => <Link href={`/book?service=${service.id}`} className="service-row" key={service.id}><span className="service-number">{service.number}</span><div className="service-title"><h3>{service.name}</h3><p>{service.description}</p></div><span className="service-duration"><Clock3 size={15} /> {service.duration} мин</span><span className="service-price">{formatPrice(service.price)}</span><span className="service-arrow"><ArrowUpRight size={21} /></span></Link>)}</div><div className="services-note"><Scissors size={17} /><span>В стоимость каждой услуги входит консультация мастера.</span></div></div>
+      <section id="services" className="services-section section-padding" aria-labelledby="services-title">
+        <div className="container">
+          <div className="section-head"><div><span className="eyebrow"><span className="eyebrow-line" /> РИТУАЛ И ТОЧНОСТЬ</span><h2 id="services-title">Услуги <em>и цены.</em></h2></div><p>Понятный выбор. Никаких неожиданностей после визита.</p></div>
+          <div className="service-list">{services.map(service => <Link href={`/book?service=${service.id}`} className="service-row" key={service.id} aria-label={`${service.name}, ${service.duration} минут, ${formatPrice(service.price)}. Записаться`}>
+            <span className="service-number">{service.number}</span>
+            <div className="service-title"><h3>{service.name}</h3><p>{service.description}</p></div>
+            <span className="service-duration">{service.duration} мин</span>
+            <span className="service-price">{formatPrice(service.price)}</span>
+            <span className="service-arrow"><ArrowUpRight size={22} /></span>
+          </Link>)}</div>
+          <p className="services-note">Каждая услуга начинается с консультации мастера. Стоимость указана в сумах (UZS).</p>
+        </div>
       </section>
 
-      <section id="barbers" className="barbers-section section-padding">
-        <div className="container"><div className="section-head"><div><span className="eyebrow"><span className="eyebrow-line" /> ЛЮДИ BRAVO</span><h2>Знакомьтесь: <em>мастера</em></h2></div><p>У каждого свой почерк. У всех один стандарт качества.</p></div><div className="barber-grid">{barbers.map((barber, index) => <article className="barber-card" key={barber.id}><div className={`barber-portrait ${barber.accent}`}><span className="barber-portrait-number">0{index + 1} / 03</span><span className="portrait-monogram">{barber.initials}</span><span className="portrait-line" /></div><div className="barber-info"><div><span className="barber-role">{barber.role} · {barber.experience}</span><h3>{barber.name}</h3><p>{barber.bio}</p></div><Link href={`/book?barber=${barber.id}`} className="circle-link" aria-label={`Записаться к мастеру ${barber.name}`}><ArrowUpRight size={20} /></Link></div></article>)}</div></div>
+      <section id="barbers" className="barbers-section section-padding" aria-labelledby="barbers-title">
+        <div className="container">
+          <div className="section-head"><div><span className="eyebrow"><span className="eyebrow-line" /> ЛЮДИ BRAVO</span><h2 id="barbers-title">Мастера<br /><em>своего дела.</em></h2></div><p>У каждого свой почерк. У всех один стандарт — внимание к вам.</p></div>
+          <div className="barber-grid">{barbers.map((barber, index) => <article className="barber-card" key={barber.id}>
+            <div className="barber-portrait"><Image src={barber.photo} alt={`Портрет мастера ${barber.name}`} fill sizes="(max-width: 650px) 100vw, (max-width: 900px) 50vw, 33vw" /><span className="barber-portrait-number">{String(index + 1).padStart(2, "0")} / {String(barbers.length).padStart(2, "0")}</span></div>
+            <div className="barber-info"><div><span className="barber-role">{barber.role} · {barber.experience}</span><h3>{barber.name}</h3><p>{barber.bio}</p></div><Link href={`/book?barber=${barber.id}`} className="barber-book" aria-label={`Записаться к мастеру ${barber.name}`}>Записаться <ArrowUpRight size={18} /></Link></div>
+          </article>)}</div>
+        </div>
       </section>
 
-      <section className="quote-banner"><div className="container quote-inner"><span className="quote-mark">“</span><p>Стиль — это способ рассказать о себе<br />без единого слова.</p><span className="quote-small">BRAVO BARBERSHOP</span></div></section>
+      <section id="gallery" className="gallery-section section-padding" aria-labelledby="gallery-title">
+        <div className="container">
+          <div className="section-head"><div><span className="eyebrow"><span className="eyebrow-line" /> ВНУТРИ BRAVO</span><h2 id="gallery-title">Внимание <em>видно.</em></h2></div><p>Атмосфера начинается с пространства и продолжается в каждой детали работы.</p></div>
+          <div className="gallery-layout">
+            <figure className="gallery-feature"><div className="gallery-image gallery-reveal"><Image src="/images/barbershop-1.jpg" alt="Зал барбершопа с кирпичной стеной, креслами и работающим мастером" fill sizes="(max-width: 800px) 100vw, 55vw" /></div><figcaption><span>01 / ПРОСТРАНСТВО</span><span>Место, где можно замедлиться.</span></figcaption></figure>
+            <div className="gallery-side">
+              <figure><div className="gallery-image"><Image src="/images/barbershop-2.jpg" alt="Барбер оформляет бороду клиенту" fill sizes="(max-width: 800px) 100vw, 40vw" /></div><figcaption><span>02 / МАСТЕРСТВО</span><span>Точность в движении.</span></figcaption></figure>
+              <figure><div className="gallery-image"><Image src="/images/barbershop-3.jpg" alt="Рабочее место барбера с инструментами для стрижки" fill sizes="(max-width: 800px) 100vw, 40vw" /></div><figcaption><span>03 / ДЕТАЛИ</span><span>Важен каждый инструмент.</span></figcaption></figure>
+            </div>
+          </div>
+          <p className="visual-disclaimer">Фотографии пространства и работы иллюстративные.</p>
+        </div>
+      </section>
 
-      <section id="reviews" className="reviews-section section-padding"><div className="container"><div className="section-head"><div><span className="eyebrow"><span className="eyebrow-line" /> ИЗ ПЕРВЫХ УСТ</span><h2>Что говорят <em>гости</em></h2></div><div className="rating-pill"><Star size={17} fill="currentColor" /> 5.0 <span>любят возвращаться</span></div></div><div className="reviews-grid">{reviews.map(review => <article className="review-card" key={review.name}><div className="review-stars" aria-label="5 из 5">★★★★★</div><p>«{review.text}»</p><div className="review-author"><span className="review-avatar">{review.name[0]}</span><div><strong>{review.name}</strong><span>{review.date}</span></div><span className="review-verified">ГОСТЬ BRAVO</span></div></article>)}</div></div></section>
+      <ReviewRail />
 
-      <section className="cta-section"><div className="container cta-inner"><div><span className="eyebrow"><span className="eyebrow-line" /> ВРЕМЯ ДЛЯ СЕБЯ</span><h2>Хороший день<br />начинается <em>здесь.</em></h2></div><div><p>Выберите удобное время. Об остальном позаботимся мы.</p><Link href="/book" className="button button-dark button-large">Выбрать время <ArrowUpRight size={19} /></Link></div></div></section>
+      <section className="cta-section"><div className="container cta-inner"><div><span className="eyebrow"><span className="eyebrow-line" /> ВАШЕ ВРЕМЯ</span><h2>Увидимся<br /><em>в кресле.</em></h2></div><div><p>Выберите услугу, мастера и удобное время. Остальное — за нами.</p><Link href="/book" className="button button-light button-large">Выбрать время <ArrowUpRight size={18} /></Link></div></div></section>
 
-      <section id="contacts" className="contacts-section section-padding"><div className="container contacts-grid"><div className="contacts-content"><span className="eyebrow"><span className="eyebrow-line" /> ГДЕ НАС НАЙТИ</span><h2>Заходите <em>в гости.</em></h2><p>Мы всегда рады новым лицам и старым друзьям.</p><div className="contact-item"><MapPin size={20} /><div><span>Адрес</span><strong>Ташкент, ул. Шота Руставели, 35</strong></div></div><div className="contact-item"><Clock3 size={20} /><div><span>Часы работы</span><strong>Ежедневно, 10:00–20:00</strong></div></div><div className="contact-item"><Scissors size={20} /><div><span>Телефон</span><a href="tel:+998901234567">+998 90 123 45 67</a></div></div><span className="demo-note">Адрес и контакты приведены для демонстрации.</span></div><div className="map-card"><iframe title="Карта района барбершопа в Ташкенте" src="https://www.openstreetmap.org/export/embed.html?bbox=69.250%2C41.275%2C69.285%2C41.300&layer=mapnik&marker=41.2875%2C69.2675" loading="lazy" referrerPolicy="no-referrer-when-downgrade" /><a href="https://www.openstreetmap.org/?mlat=41.2875&mlon=69.2675#map=15/41.2875/69.2675" target="_blank" rel="noreferrer">Открыть карту <ArrowUpRight size={15} /></a></div></div></section>
+      <section id="contacts" className="contacts-section section-padding" aria-labelledby="contacts-title"><div className="container">
+        <div className="section-head"><div><span className="eyebrow"><span className="eyebrow-line" /> НАЙТИ НАС ПРОСТО</span><h2 id="contacts-title">До встречи<br /><em>в Ташкенте.</em></h2></div><p>Запишитесь онлайн или позвоните — мы поможем выбрать удобное время.</p></div>
+        <div className="contacts-grid"><div className="contacts-content">
+          <div className="contact-item"><MapPin size={20} /><div><span>Адрес</span><strong>Ташкент, ул. Шота Руставели, 35</strong><a href={yandexRouteUrl} target="_blank" rel="noreferrer">Построить маршрут <ArrowUpRight size={16} /></a></div></div>
+          <div className="contact-item"><Clock3 size={20} /><div><span>Часы работы</span><strong>Ежедневно, 10:00–20:00</strong></div></div>
+          <div className="contact-item"><Phone size={20} /><div><span>Телефон</span><a href="tel:+998901234567">+998 90 123 45 67</a></div></div>
+          <Link href="/book" className="button button-primary">Записаться <ArrowUpRight size={17} /></Link>
+          <span className="demo-note">Адрес, контакты и данные для записи приведены для демонстрации.</span>
+        </div><div className="map-card"><iframe title="Яндекс Карта: улица Шота Руставели, 35, Ташкент" src={yandexEmbedUrl} loading="lazy" referrerPolicy="strict-origin-when-cross-origin" /><a href={yandexMapUrl} target="_blank" rel="noreferrer">Открыть в Яндекс Картах <ArrowUpRight size={16} /></a></div></div>
+      </div></section>
     </main>
+    <Link href="/book" className="mobile-booking-bar">Записаться онлайн <ArrowUpRight size={18} /></Link>
     <SiteFooter />
   </>;
 }

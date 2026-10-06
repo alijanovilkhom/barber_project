@@ -1,11 +1,31 @@
 {
   "name": "barber-booking",
   "private": true,
-  "workspaces": ["apps/*"],
+  "workspaces": ["apps/*", "packages/*"],
   "scripts": {
-    "dev": "npm run dev --workspace @barber/web",
+    "dev": "concurrently -k -n api,web,miniapp -c blue,green,magenta \"npm run dev:api\" \"npm run dev:web\" \"npm run dev:miniapp\"",
+    "dev:web": "npm run dev --workspace @barber/web",
+    "dev:api": "npm run dev --workspace @barber/api",
+    "dev:miniapp": "npm run dev --workspace @barber/miniapp",
     "build": "npm run build --workspace @barber/web",
+    "build:api": "npm run build --workspace @barber/api",
+    "build:miniapp": "npm run build --workspace @barber/miniapp",
     "lint": "npm run lint --workspace @barber/web",
-    "typecheck": "npm run typecheck --workspace @barber/web"
+    "typecheck": "npm run typecheck --workspace @barber/web",
+    "typecheck:api": "npm run typecheck --workspace @barber/api",
+    "typecheck:miniapp": "npm run typecheck --workspace @barber/miniapp",
+    "telegram:setup": "npm run telegram:setup --workspace @barber/api",
+    "telegram:barber-link": "npm run telegram:barber-link --workspace @barber/api --",
+    "admin:create": "npm run admin:create --workspace @barber/api --",
+    "db:generate": "npm run generate --workspace @barber/db",
+    "db:validate": "npm run validate --workspace @barber/db",
+    "db:migrate": "npm run migrate --workspace @barber/db",
+    "db:seed": "npm run seed --workspace @barber/db",
+    "db:verify": "npm run verify --workspace @barber/db",
+    "db:studio": "npm run studio --workspace @barber/db",
+    "db:typecheck": "npm run typecheck --workspace @barber/db"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   }
 }
