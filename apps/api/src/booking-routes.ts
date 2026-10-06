@@ -105,7 +105,7 @@ export function registerBookingRoutes(app: FastifyInstance, db: DatabaseClient, 
     const slot = await resolveSlot(db, { serviceIds: body.serviceIds, barberId: body.barberId, date: requested.date }, body.startsAt);
     const selected = await selection(db, body.serviceIds, slot.barberId);
     const phone = normalizePhone(body.client.phone);
-    const booking = await db.$transaction(async tx => {
+    const created = await db.$transaction(async tx => {
       let client;
       if (telegramUser) {
         const telegramId = BigInt(telegramUser.id);
@@ -127,9 +127,10 @@ export function registerBookingRoutes(app: FastifyInstance, db: DatabaseClient, 
           manageToken: randomUUID(), source: "web",
           services: { create: selected.snapshots },
         },
-        include: bookingInclude,
+        select: { id: true },
       });
     }, { maxWait: 10_000, timeout: 30_000 });
+    const booking = await db.booking.findUniqueOrThrow({ where: { id: created.id }, include: bookingInclude });
     void notifyBooking(db, bot, adminChatId, booking.id, "created").catch(error => app.log.error(error));
     return reply.code(201).send({ data: bookingView(booking) });
   });
@@ -160,7 +161,8 @@ export function registerBookingRoutes(app: FastifyInstance, db: DatabaseClient, 
     const cutoff = await db.setting.findUnique({ where: { key: "cancel_cutoff_min" } });
     const minutes = typeof cutoff?.value === "number" ? cutoff.value : 30;
     if (booking.startsAt.getTime() - Date.now() < minutes * 60_000) throw Object.assign(new Error("Cancellation cutoff"), { statusCode: 422, apiCode: "CANCEL_TOO_LATE" });
-    const updated = await db.booking.update({ where: { id: booking.id }, data: { status: "cancelled" }, include: bookingInclude });
+    await db.booking.update({ where: { id: booking.id }, data: { status: "cancelled" }, select: { id: true } });
+    const updated = await db.booking.findUniqueOrThrow({ where: { id: booking.id }, include: bookingInclude });
     void notifyBooking(db, bot, adminChatId, updated.id, "cancelled").catch(error => app.log.error(error));
     return { data: bookingView(updated) };
   });
@@ -175,7 +177,7 @@ export function registerBookingRoutes(app: FastifyInstance, db: DatabaseClient, 
     const requested = dateAndTime(body.startsAt);
     const slot = await resolveSlot(db, { serviceIds, barberId: body.barberId, date: requested.date }, body.startsAt);
     const selected = await selection(db, serviceIds, slot.barberId);
-    const updated = await db.$transaction(async tx => {
+    const updatedId = await db.$transaction(async tx => {
       await tx.bookingService.deleteMany({ where: { bookingId: booking.id } });
       return tx.booking.update({
         where: { id: booking.id },
@@ -183,9 +185,10 @@ export function registerBookingRoutes(app: FastifyInstance, db: DatabaseClient, 
           barberId: slot.barberId, startsAt: slot.startsAt, endsAt: new Date(slot.startsAt.getTime() + selected.durationMin * 60_000),
           totalDurationMin: selected.durationMin, totalPrice: selected.totalPrice, services: { create: selected.snapshots },
         },
-        include: bookingInclude,
+        select: { id: true },
       });
     }, { maxWait: 10_000, timeout: 30_000 });
+    const updated = await db.booking.findUniqueOrThrow({ where: { id: updatedId.id }, include: bookingInclude });
     void notifyBooking(db, bot, adminChatId, updated.id, "rescheduled").catch(error => app.log.error(error));
     return { data: bookingView(updated) };
   });

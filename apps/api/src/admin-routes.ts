@@ -19,6 +19,11 @@ const settingInput = z.object({ timezone: z.string().min(3).max(80), cancel_cuto
 const timeOffInput = z.object({ barberId: z.string().uuid().nullable(), startsAt: z.string().datetime(), endsAt: z.string().datetime(), type: z.enum(["day_off", "vacation", "sick_leave", "other"]), note: z.string().trim().max(300).nullable().optional() });
 const portfolioInput = z.object({ imageUrl: z.string().trim().min(1).max(500), sortOrder: z.number().int().default(0) });
 const manualBookingInput = z.object({ serviceIds: z.array(z.string().uuid()).min(1).max(10), barberId: z.string().uuid(), startsAt: z.string().datetime({ offset: true }), client: z.object({ name: z.string().trim().min(2).max(60), phone: z.string().trim().min(9).max(25) }) });
+const adminBookingInclude = {
+  client: { select: { name: true, phone: true } },
+  barber: { select: { id: true, name: true } },
+  services: { select: { serviceId: true, name: true } },
+} as const;
 
 export function registerAdminRoutes(app: FastifyInstance, db: DatabaseClient, env: ApiEnv) {
   app.post("/api/v1/admin/login", { config: { rateLimit: { max: 5, timeWindow: "15 minutes" } } }, async (request, reply) => {
@@ -49,7 +54,7 @@ export function registerAdminRoutes(app: FastifyInstance, db: DatabaseClient, en
     const rows = await db.booking.findMany({
       where: { status: query.status, startsAt: query.from || query.to ? { gte: query.from ? new Date(query.from) : undefined, lte: query.to ? new Date(query.to) : undefined } : undefined },
       orderBy: { startsAt: "desc" }, take: 250,
-      include: { client: { select: { name: true, phone: true } }, barber: { select: { id: true, name: true } }, services: { select: { serviceId: true, name: true } } },
+      include: adminBookingInclude,
     });
     return { data: rows.map(row => ({ ...row, totalPrice: Number(row.totalPrice), timeRange: undefined })) };
   });
@@ -63,7 +68,8 @@ export function registerAdminRoutes(app: FastifyInstance, db: DatabaseClient, en
   app.post("/api/v1/admin/bookings/:id/status", async request => {
     requireAdmin(request, env);
     const { id } = idParam.parse(request.params); const { status } = statusBody.parse(request.body);
-    const row = await db.booking.update({ where: { id }, data: { status }, include: { client: true, barber: true, services: true } });
+    await db.booking.update({ where: { id }, data: { status }, select: { id: true } });
+    const row = await db.booking.findUniqueOrThrow({ where: { id }, include: adminBookingInclude });
     return { data: { ...row, totalPrice: Number(row.totalPrice), timeRange: undefined } };
   });
 
@@ -119,10 +125,11 @@ export function registerAdminRoutes(app: FastifyInstance, db: DatabaseClient, en
     const linkById = new Map(links.map(item => [item.serviceId, item]));
     const snapshots = services.map(service => ({ serviceId: service.id, name: service.name, durationMin: linkById.get(service.id)?.durationMin ?? service.durationMin, price: linkById.get(service.id)?.price ?? service.price }));
     const durationMin = snapshots.reduce((sum, item) => sum + item.durationMin, 0); const price = snapshots.reduce((sum, item) => sum + Number(item.price), 0); const phone = `+${digits}`;
-    const booking = await db.$transaction(async tx => { const client = await tx.client.upsert({ where: { phone }, create: { phone, name: body.client.name }, update: { name: body.client.name } }); return tx.booking.create({ data: { clientId: client.id, barberId: body.barberId, startsAt: new Date(body.startsAt), endsAt: new Date(new Date(body.startsAt).getTime() + durationMin * 60000), totalDurationMin: durationMin, totalPrice: price, source: "admin", manageToken: randomUUID(), services: { create: snapshots } }, include: { client: true, barber: true, services: true } }); });
+    const bookingId = await db.$transaction(async tx => { const client = await tx.client.upsert({ where: { phone }, create: { phone, name: body.client.name }, update: { name: body.client.name } }); const created = await tx.booking.create({ data: { clientId: client.id, barberId: body.barberId, startsAt: new Date(body.startsAt), endsAt: new Date(new Date(body.startsAt).getTime() + durationMin * 60000), totalDurationMin: durationMin, totalPrice: price, source: "admin", manageToken: randomUUID(), services: { create: snapshots } }, select: { id: true } }); return created.id; });
+    const booking = await db.booking.findUniqueOrThrow({ where: { id: bookingId }, include: adminBookingInclude });
     return { data: { ...booking, totalPrice: Number(booking.totalPrice), timeRange: undefined } };
   });
-  app.put("/api/v1/admin/bookings/:id/reschedule", async request => { requireAdmin(request, env); const { id } = idParam.parse(request.params); const body = z.object({ barberId: z.string().uuid(), startsAt: z.string().datetime({ offset: true }) }).parse(request.body); const existing = await db.booking.findUnique({ where: { id }, include: { services: true } }); if (!existing || existing.status !== "confirmed") throw Object.assign(new Error("Активная запись не найдена"), { statusCode: 404 }); const serviceIds = existing.services.map(row => row.serviceId); const day = new Date(new Date(body.startsAt).getTime()+5*3600000).toISOString().slice(0,10); const availability = await (await import("./availability.js")).getAvailability(db,{serviceIds,barberId:body.barberId,date:day}); if (!availability.slots.some(slot=>slot.startsAt===new Date(body.startsAt).toISOString())) throw Object.assign(new Error("Это время уже занято или недоступно"),{statusCode:409,apiCode:"SLOT_TAKEN"}); const row=await db.booking.update({where:{id},data:{barberId:body.barberId,startsAt:new Date(body.startsAt),endsAt:new Date(new Date(body.startsAt).getTime()+existing.totalDurationMin*60000)},include:{client:true,barber:true,services:true}}); return {data:{...row,totalPrice:Number(row.totalPrice),timeRange:undefined}}; });
+  app.put("/api/v1/admin/bookings/:id/reschedule", async request => { requireAdmin(request, env); const { id } = idParam.parse(request.params); const body = z.object({ barberId: z.string().uuid(), startsAt: z.string().datetime({ offset: true }) }).parse(request.body); const existing = await db.booking.findUnique({ where: { id }, include: { services: true } }); if (!existing || existing.status !== "confirmed") throw Object.assign(new Error("Активная запись не найдена"), { statusCode: 404 }); const serviceIds = existing.services.map(row => row.serviceId); const day = new Date(new Date(body.startsAt).getTime()+5*3600000).toISOString().slice(0,10); const availability = await (await import("./availability.js")).getAvailability(db,{serviceIds,barberId:body.barberId,date:day}); if (!availability.slots.some(slot=>slot.startsAt===new Date(body.startsAt).toISOString())) throw Object.assign(new Error("Это время уже занято или недоступно"),{statusCode:409,apiCode:"SLOT_TAKEN"}); await db.booking.update({where:{id},data:{barberId:body.barberId,startsAt:new Date(body.startsAt),endsAt:new Date(new Date(body.startsAt).getTime()+existing.totalDurationMin*60000)},select:{id:true}}); const row=await db.booking.findUniqueOrThrow({where:{id},include:adminBookingInclude}); return {data:{...row,totalPrice:Number(row.totalPrice),timeRange:undefined}}; });
 
   app.get("/api/v1/admin/settings", async request => { requireAdmin(request, env); const keys = ["timezone", "cancel_cutoff_min", "slot_step_min", "booking_horizon_days", "min_notice_min", "reminder_day_minutes", "reminder_short_minutes", "review_delay_min", "review_public_min_rating"]; const rows = await db.setting.findMany({ where: { key: { in: keys } } }); return { data: Object.fromEntries(rows.map(row => [row.key, row.value])) }; });
   app.put("/api/v1/admin/settings", async request => { requireAdmin(request, env); const body = settingInput.parse(request.body); await db.$transaction(Object.entries(body).map(([key, value]) => db.setting.upsert({ where: { key }, create: { key, value }, update: { value } }))); return { data: body }; });
