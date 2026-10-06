@@ -45,6 +45,12 @@ export function buildApp(env: ApiEnv) {
     credentials: true,
   });
 
+  app.get("/", async () => ({
+    status: "ok",
+    service: "BRAVO Barbershop API",
+    health: "/health",
+  }));
+
   app.get("/health", async () => {
     await db.$queryRaw`SELECT 1`;
     return { status: "ok", database: "connected" };

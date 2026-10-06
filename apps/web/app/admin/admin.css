@@ -1,4 +1,6 @@
 .admin-login,.admin-app{--a-bg:#151816;--a-panel:#202420;--a-line:#353a35;--a-text:#f1ede5;--a-muted:#9ea39d;--a-accent:#caa982;min-height:100vh;background:var(--a-bg);color:var(--a-text);font-family:var(--font-onest),Onest,sans-serif}
+.admin-auth-check{min-height:100vh;margin:0;display:grid;place-items:center;background:#151816;color:#caa982}
+.admin-auth-check p{max-width:420px;padding:24px;color:#f1ede5;text-align:center;line-height:1.6}
 .admin-login{display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 65% 15%,#2b302b 0,transparent 35%),var(--a-bg)}
 .admin-login-card{width:min(440px,100%);padding:46px;border:1px solid var(--a-line);background:#1b1f1c}
 .admin-monogram{width:52px;height:52px;border:1px solid var(--a-accent);display:grid;place-items:center;font:32px Prata,serif;margin-bottom:28px}.admin-kicker,.admin-page-head span{font-size:10px;letter-spacing:.2em;color:var(--a-accent)}

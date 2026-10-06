@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 export function SiteHeader({ overlayHero = false }: { overlayHero?: boolean }) {
   const headerRef = useRef<HTMLElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [theme, setTheme] = useState<"dark" | "light">("light");
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
 
   useEffect(() => {
     const current = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
