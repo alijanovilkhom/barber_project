@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
-import { createDatabaseClient } from "./client.ts";
-import { requireDatabaseUrl } from "./env.ts";
+import { createDatabaseClient } from "./client.js";
+import { requireDatabaseUrl } from "./env.js";
 
 const db = createDatabaseClient(requireDatabaseUrl("DIRECT_URL"));
 try {

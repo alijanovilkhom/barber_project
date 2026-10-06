@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { Bot, InlineKeyboard, webhookCallback } from "grammy";
 import type { FastifyInstance } from "fastify";
 import type { DatabaseClient } from "@barber/db";
-import type { ApiEnv } from "./env.ts";
+import type { ApiEnv } from "./env.js";
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat("ru-RU", {

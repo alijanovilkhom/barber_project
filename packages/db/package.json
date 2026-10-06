@@ -4,9 +4,13 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/client.ts"
+    ".": {
+      "types": "./src/client.ts",
+      "import": "./dist/src/client.js"
+    }
   },
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
     "generate": "prisma generate",
     "validate": "prisma validate",
     "migrate": "prisma migrate deploy",

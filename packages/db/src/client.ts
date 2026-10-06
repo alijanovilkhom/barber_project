@@ -1,6 +1,6 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../generated/prisma/client.ts";
-import { requireDatabaseUrl } from "./env.ts";
+import { PrismaClient } from "../generated/prisma/client.js";
+import { requireDatabaseUrl } from "./env.js";
 
 /** Server-only client. Call once in the API process and disconnect on shutdown. */
 export function createDatabaseClient(connection = requireDatabaseUrl("DATABASE_URL")) {

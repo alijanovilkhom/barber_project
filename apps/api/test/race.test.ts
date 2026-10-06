@@ -1,9 +1,9 @@
-import "../../../packages/db/src/env.ts";
+import "../../../packages/db/src/env.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createDatabaseClient } from "@barber/db";
-import { buildApp } from "../src/app.ts";
-import { tashkentDate } from "../src/availability.ts";
+import { buildApp } from "../src/create-app.js";
+import { tashkentDate } from "../src/availability.js";
 
 test("only one concurrent request can reserve a barber slot", async () => {
   const app = buildApp({ NODE_ENV: "test", API_HOST: "127.0.0.1", API_PORT: 3001, APP_URL: "http://localhost:3000" });

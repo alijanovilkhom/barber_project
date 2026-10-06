@@ -1,4 +1,4 @@
-import "../../../packages/db/src/env.ts";
+import "../../../packages/db/src/env.js";
 import { randomBytes } from "node:crypto";
 import { createDatabaseClient } from "@barber/db";
 

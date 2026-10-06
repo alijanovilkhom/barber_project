@@ -2,10 +2,10 @@ import { randomUUID } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import type { DatabaseClient } from "@barber/db";
 import { z } from "zod";
-import { getAvailability, getAvailableDays, tashkentDate, type AvailabilityInput } from "./availability.ts";
-import { telegramUserFromRequest } from "./telegram-auth.ts";
+import { getAvailability, getAvailableDays, tashkentDate, type AvailabilityInput } from "./availability.js";
+import { telegramUserFromRequest } from "./telegram-auth.js";
 import type { Bot } from "grammy";
-import { notifyBooking } from "./telegram-bot.ts";
+import { notifyBooking } from "./telegram-bot.js";
 
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 const availabilityQuery = z.object({

@@ -1,7 +1,7 @@
-import "../../../packages/db/src/env.ts";
+import "../../../packages/db/src/env.js";
 import { createHash } from "node:crypto";
 import { Bot } from "grammy";
-import { readApiEnv } from "./env.ts";
+import { readApiEnv } from "./env.js";
 
 const env = readApiEnv();
 if (!env.TELEGRAM_BOT_TOKEN) throw new Error("TELEGRAM_BOT_TOKEN is required");

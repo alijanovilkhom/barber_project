@@ -1,6 +1,6 @@
-import "../../../packages/db/src/env.ts";
-import { buildApp } from "./app.ts";
-import { readApiEnv } from "./env.ts";
+import "../../../packages/db/src/env.js";
+import { buildApp } from "./create-app.js";
+import { readApiEnv } from "./env.js";
 
 const env = readApiEnv();
 const app = buildApp(env);

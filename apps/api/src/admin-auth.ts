@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { FastifyReply, FastifyRequest } from "fastify";
-import type { ApiEnv } from "./env.ts";
+import type { ApiEnv } from "./env.js";
 
 export const adminCookieName = "bravo_admin";
 type Session = { adminId: string; exp: number };

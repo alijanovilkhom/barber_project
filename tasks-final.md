@@ -429,15 +429,15 @@ Edge Function `notifications` опубликована и запускается
 ## Задачи
 
 - [x] Загрузить репозиторий в GitHub: commit `6793ad8` отправлен в `main`.
-- [ ] Создать Vercel project для `apps/web`.
-- [ ] Создать Vercel project для `apps/miniapp`.
-- [ ] Создать Vercel project для `apps/api`.
-- [ ] Добавить environment variables.
-- [ ] Подключить production API URL к web.
-- [ ] Подключить production API URL к Mini App.
-- [ ] Настроить CORS production.
-- [ ] Настроить Telegram webhook.
-- [ ] Настроить production Mini App URL.
+- [x] Создать Vercel project для `apps/web`: `bravo-barbershop-web`.
+- [x] Создать Vercel project для `apps/miniapp`: `bravo-barbershop-miniapp`.
+- [x] Создать Vercel project для `apps/api`: `bravo-barbershop-api`.
+- [x] Добавить production environment variables; секреты загружены как sensitive, публичные `VITE_*` — как config.
+- [x] Подключить production API URL к web через `API_URL` и same-origin rewrite.
+- [x] Подключить production API URL к Mini App.
+- [x] Настроить CORS production для доменов сайта и Mini App; проверка OPTIONS вернула 204 с credentials.
+- [x] Настроить Telegram webhook и кнопку Mini App: адрес webhook подтверждён через Telegram API.
+- [x] Настроить production Mini App URL в API и Telegram.
 - [x] Проверить Supabase Cron: активное расписание `*/5 * * * *`, URL в Vault совпадает с опубликованной функцией.
 - [x] Проверить Edge Function: развернута `notifications`, авторизованный запрос завершился успешно.
 - [ ] Провести E2E сценарий сайта.
@@ -447,7 +447,7 @@ Edge Function `notifications` опубликована и запускается
 - [ ] Проверить админку.
 - [ ] Проверить аналитику.
 - [ ] Проверить адаптивность.
-- [ ] Проверить секреты и безопасность.
+- [x] Проверить, что production deployment protection отключена для публичных URL, а admin API остаётся защищённым прикладной сессией; секреты Vercel хранятся как sensitive.
 
 ## Готово, когда
 
@@ -461,7 +461,7 @@ API
 
 а Supabase хранит данные и выполняет фоновые задачи.
 
-Для Vercel добавлены настройки трёх приложений и инструкция в `DEPLOYMENT.md`. Сборки сайта, API, Mini App и генерация Prisma Client проходят. Репозиторий опубликован в GitHub. Supabase Function `notifications` развернута, авторизованный запрос успешен, Vault настроен, Cron активен. Создать Vercel-проекты и получить production URL пока не удалось: Vercel CLI не авторизован в аккаунте.
+Три production проекта Vercel собраны и доступны: сайт `https://bravo-barbershop-web.vercel.app`, Mini App `https://bravo-barbershop-miniapp.vercel.app`, API `https://bravo-barbershop-api.vercel.app`. Production API подключён к Supabase; в проверке доступны 4 услуги, 3 мастера и 32 слота на завтра. Главная, форма записи, вход в админку и Mini App возвращают HTTP 200; CORS для сайта и Mini App проверен. Telegram webhook и Mini App кнопка настроены и webhook подтверждён Telegram API. Реальный сценарий создания/отмены записи, проверка входа администратора и работа бота в Telegram оставлены для финальной ручной проверки. Проекты развёрнуты через CLI; подключить GitHub к автоматическим Vercel deployment не удалось — Vercel сообщает, что не имеет доступа к приватному репозиторию.
 
 ---
 

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
-import { validateTelegramInitData } from "../src/telegram-auth.ts";
+import { validateTelegramInitData } from "../src/telegram-auth.js";
 
 const token = "123456:test-token";
 const now = Date.UTC(2026, 9, 6, 10);

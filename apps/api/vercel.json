@@ -1,9 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "cd ../.. && npm run db:generate && npm run build:api",
+  "buildCommand": "cd ../.. && npm run db:generate && npm run build --workspace @barber/db && npm run build:api",
   "functions": {
-    "src/server.ts": {
-      "maxDuration": 60
-    }
-  }
+    "api/index.ts": { "maxDuration": 60 }
+  },
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api/index?_vercel_path=/$1" }
+  ]
 }

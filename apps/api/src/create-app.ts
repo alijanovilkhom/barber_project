@@ -8,11 +8,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { ZodError, z } from "zod";
 import { createDatabaseClient } from "@barber/db";
-import type { ApiEnv } from "./env.ts";
-import { registerBookingRoutes } from "./booking-routes.ts";
-import { telegramUserFromRequest } from "./telegram-auth.ts";
-import { createTelegramBot, registerTelegramWebhook } from "./telegram-bot.ts";
-import { registerAdminRoutes } from "./admin-routes.ts";
+import type { ApiEnv } from "./env.js";
+import { registerBookingRoutes } from "./booking-routes.js";
+import { telegramUserFromRequest } from "./telegram-auth.js";
+import { createTelegramBot, registerTelegramWebhook } from "./telegram-bot.js";
+import { registerAdminRoutes } from "./admin-routes.js";
 
 const barberParam = z.object({ id: z.string().trim().min(1).max(100) });
 const uuid = z.string().uuid();

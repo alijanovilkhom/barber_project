@@ -1,10 +1,10 @@
-import "../../../packages/db/src/env.ts";
+import "../../../packages/db/src/env.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
 import { createDatabaseClient } from "@barber/db";
-import { buildApp } from "../src/app.ts";
-import { tashkentDate } from "../src/availability.ts";
+import { buildApp } from "../src/create-app.js";
+import { tashkentDate } from "../src/availability.js";
 
 const botToken = "123456:test-miniapp-token";
 function initData(userId: number) {

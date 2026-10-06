@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { generateSlotMinutes, localDateTimeToUtc, minuteToTime, tashkentDate } from "../src/availability.ts";
+import { generateSlotMinutes, localDateTimeToUtc, minuteToTime, tashkentDate } from "../src/availability.js";
 
 test("generates stepped slots that fit the full service", () => {
   assert.deepEqual(generateSlotMinutes({ workStart: 600, workEnd: 720, duration: 45, step: 15, blocked: [] }), [600, 615, 630, 645, 660, 675]);
