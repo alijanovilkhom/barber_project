@@ -13,6 +13,9 @@ const links = [
 ];
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const path = usePathname(); const router = useRouter();
-  async function logout() { await adminRequest("/api/v1/admin/logout", { method: "POST" }); router.replace("/admin/login"); }
+  async function logout() {
+    try { await adminRequest("/api/v1/admin/logout", { method: "POST" }); }
+    finally { router.replace("/admin/login"); router.refresh(); }
+  }
   return <div className="admin-app"><aside className="admin-sidebar"><Link href="/admin" className="admin-brand"><span>B</span><strong>BRAVO<small>УПРАВЛЕНИЕ</small></strong></Link><nav>{links.map(item => <Link key={item.href} href={item.href} className={path === item.href ? "active" : ""}><item.icon size={18} />{item.label}</Link>)}</nav><button className="admin-logout" onClick={logout}><LogOut size={17} /> Выйти</button></aside><main className="admin-main">{children}</main></div>;
 }

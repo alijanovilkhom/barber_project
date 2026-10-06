@@ -1,26 +1,138 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarDays, LoaderCircle, Plus, X } from "lucide-react";
 import { adminRequest, type AdminBooking } from "@/lib/admin-api";
-import { loadAvailability } from "@/lib/booking-api";
+import { loadAvailability, type AvailabilitySlot } from "@/lib/booking-api";
+
+type Service = { id: string; name: string; durationMin: number; isActive: boolean };
+type Barber = { id: string; name: string; isActive: boolean; serviceIds: string[] };
+type DialogMode = "create" | "move" | null;
 
 const statusLabel = { confirmed: "Подтверждена", completed: "Завершена", cancelled: "Отменена", no_show: "Неявка" };
+const today = () => new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
 export function AdminBookings() {
-  const router = useRouter(); const [rows, setRows] = useState<AdminBooking[]>([]); const [loading, setLoading] = useState(true); const [error, setError] = useState("");
-  const [createOpen,setCreateOpen]=useState(false);const [services,setServices]=useState<any[]>([]);const[barbers,setBarbers]=useState<any[]>([]);const [serviceId,setServiceId]=useState("");const[barberId,setBarberId]=useState("");const[date,setDate]=useState("");const[slots,setSlots]=useState<any[]>([]);const[startsAt,setStartsAt]=useState("");const[name,setName]=useState("");const[phone,setPhone]=useState("");const[message,setMessage]=useState("");const[busy,setBusy]=useState(false);
-  const [moving,setMoving]=useState<AdminBooking|null>(null);
-  async function load() { try { setRows(await adminRequest("/api/v1/admin/bookings")); } catch (e: any) { if (e.status === 401) return router.replace("/admin/login"); setError(e.message); } finally { setLoading(false); } }
+  const router = useRouter();
+  const [rows, setRows] = useState<AdminBooking[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [barbers, setBarbers] = useState<Barber[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [dialog, setDialog] = useState<DialogMode>(null);
+  const [moving, setMoving] = useState<AdminBooking | null>(null);
+  const [serviceId, setServiceId] = useState("");
+  const [barberId, setBarberId] = useState("");
+  const [date, setDate] = useState("");
+  const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [startsAt, setStartsAt] = useState("");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [dialogError, setDialogError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [changingStatus, setChangingStatus] = useState("");
+
+  async function load() {
+    setError("");
+    try { setRows(await adminRequest("/api/v1/admin/bookings")); }
+    catch (value) {
+      const requestError = value as Error & { status?: number };
+      if (requestError.status === 401) return router.replace("/admin/login");
+      setError(requestError.message);
+    } finally { setLoading(false); }
+  }
+
   useEffect(() => { void load(); }, []);
-  useEffect(()=>{void Promise.all([adminRequest<any[]>('/api/v1/admin/services'),adminRequest<any[]>('/api/v1/admin/barbers')]).then(([s,b])=>{setServices(s.filter(x=>x.isActive));setBarbers(b.filter(x=>x.isActive));}).catch(()=>{});},[]);
-  useEffect(()=>{if(!serviceId||!barberId||!date){setSlots([]);return;}loadAvailability([serviceId],barberId,date).then(data=>setSlots(data.slots)).catch(()=>setSlots([]));},[serviceId,barberId,date]);
-  async function status(id: string, value: AdminBooking["status"]) { await adminRequest(`/api/v1/admin/bookings/${id}/status`, { method: "POST", body: JSON.stringify({ status: value }) }); await load(); }
-  async function create(event:React.FormEvent){event.preventDefault();setBusy(true);setMessage("");try{await adminRequest('/api/v1/admin/bookings',{method:'POST',body:JSON.stringify({serviceIds:[serviceId],barberId,startsAt,client:{name,phone}})});setCreateOpen(false);setName('');setPhone('');await load();}catch(e:any){setMessage(e.message);}finally{setBusy(false);}}
-  useEffect(()=>{if(!moving||!date||!barberId)return;loadAvailability(moving.services.map(s=>s.serviceId),barberId,date).then(d=>setSlots(d.slots)).catch(()=>setSlots([]));},[moving,date,barberId]);
-  async function reschedule(event:React.FormEvent){event.preventDefault();if(!moving||!startsAt)return;setBusy(true);setMessage('');try{await adminRequest(`/api/v1/admin/bookings/${moving.id}/reschedule`,{method:'PUT',body:JSON.stringify({barberId,startsAt})});setMoving(null);await load();}catch(e:any){setMessage(e.message);}finally{setBusy(false);}}
-  return <><header className="admin-page-head"><div><span>РАСПИСАНИЕ</span><h1>Записи</h1><p>Последние визиты и актуальный статус клиентов.</p></div><button onClick={()=>setCreateOpen(true)} className="admin-primary"><Plus size={18} /> Новая запись</button></header>
-    {message&&<p className="admin-notice">{message}</p>}<section className="admin-panel">{loading ? <div className="admin-state"><LoaderCircle className="spin" />Загрузка записей…</div> : error ? <div className="admin-error">{error}</div> : rows.length === 0 ? <div className="admin-empty"><CalendarDays size={30} /><strong>Записей пока нет</strong></div> : <div className="admin-table-wrap"><table><thead><tr><th>Дата</th><th>Клиент</th><th>Услуга</th><th>Мастер</th><th>Статус</th><th>Сумма</th><th></th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td><strong>{new Intl.DateTimeFormat("ru-RU", { timeZone: "Asia/Tashkent", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(row.startsAt))}</strong></td><td>{row.client.name}<small>{row.client.phone}</small></td><td>{row.services.map(s => s.name).join(", ")}</td><td>{row.barber.name}</td><td><select value={row.status} onChange={e => void status(row.id, e.target.value as AdminBooking["status"])} className={`status-${row.status}`}><option value="confirmed">{statusLabel.confirmed}</option><option value="completed">{statusLabel.completed}</option><option value="cancelled">{statusLabel.cancelled}</option><option value="no_show">{statusLabel.no_show}</option></select></td><td>{new Intl.NumberFormat("ru-RU").format(row.totalPrice)} сум</td><td>{row.status==="confirmed"&&<button className="admin-secondary" onClick={()=>{setMoving(row);setBarberId(row.barber.id);setDate('');setStartsAt('');setSlots([]);}}>Перенести</button>}</td></tr>)}</tbody></table></div>}</section>
-    {createOpen&&<div className="admin-modal-backdrop" onMouseDown={e=>e.target===e.currentTarget&&setCreateOpen(false)}><form className="admin-modal admin-manual-booking" onSubmit={create}><header><h2>Новая запись</h2><button type="button" onClick={()=>setCreateOpen(false)}><X/></button></header><label>Услуга<select required value={serviceId} onChange={e=>{setServiceId(e.target.value);setStartsAt("")}}><option value="">Выбрать услугу</option>{services.map(s=><option key={s.id} value={s.id}>{s.name} · {s.durationMin} мин</option>)}</select></label><label>Мастер<select required value={barberId} onChange={e=>{setBarberId(e.target.value);setStartsAt("")}}><option value="">Выбрать мастера</option>{barbers.filter(b=>b.serviceIds.includes(serviceId)).map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select></label><label>Дата<input required type="date" value={date} onChange={e=>{setDate(e.target.value);setStartsAt("")}}/></label><label>Свободное время<select required value={startsAt} onChange={e=>setStartsAt(e.target.value)}><option value="">Выбрать слот</option>{slots.map(slot=><option key={slot.startsAt} value={slot.startsAt}>{slot.time}</option>)}</select></label><label>Имя клиента<input required minLength={2} value={name} onChange={e=>setName(e.target.value)}/></label><label>Телефон<input required type="tel" placeholder="+998 90 123 45 67" value={phone} onChange={e=>setPhone(e.target.value)}/></label>{message&&<p className="admin-error">{message}</p>}<footer className="admin-modal-actions"><button className="admin-secondary" type="button" onClick={()=>setCreateOpen(false)}>Отмена</button><button className="admin-primary" disabled={busy||!startsAt}>{busy?'Сохраняем…':'Создать запись'}</button></footer></form></div>}
-    {moving&&<div className="admin-modal-backdrop" onMouseDown={e=>e.target===e.currentTarget&&setMoving(null)}><form className="admin-modal admin-manual-booking" onSubmit={reschedule}><header><h2>Перенести запись</h2><button type="button" onClick={()=>setMoving(null)}><X/></button></header><p>{moving.client.name} · {moving.services.map(s=>s.name).join(', ')}</p><label>Мастер<select required value={barberId} onChange={e=>{setBarberId(e.target.value);setStartsAt('')}}>{barbers.filter(b=>moving.services.every(s=>b.serviceIds.includes(s.serviceId))).map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select></label><label>Новая дата<input required type="date" value={date} onChange={e=>{setDate(e.target.value);setStartsAt('')}}/></label><label>Свободное время<select required value={startsAt} onChange={e=>setStartsAt(e.target.value)}><option value="">Выбрать слот</option>{slots.map(slot=><option key={slot.startsAt} value={slot.startsAt}>{slot.time}</option>)}</select></label>{message&&<p className="admin-error">{message}</p>}<footer className="admin-modal-actions"><button type="button" className="admin-secondary" onClick={()=>setMoving(null)}>Отмена</button><button className="admin-primary" disabled={busy||!startsAt}>{busy?'Сохраняем…':'Сохранить время'}</button></footer></form></div>}
+  useEffect(() => {
+    void Promise.all([adminRequest<Service[]>("/api/v1/admin/services"), adminRequest<Barber[]>("/api/v1/admin/barbers")])
+      .then(([serviceRows, barberRows]) => { setServices(serviceRows.filter(item => item.isActive)); setBarbers(barberRows.filter(item => item.isActive)); })
+      .catch(value => setError(value instanceof Error ? value.message : "Не удалось загрузить справочники"));
+  }, []);
+
+  useEffect(() => {
+    if (!dialog) return;
+    function closeOnEscape(event: KeyboardEvent) { if (event.key === "Escape" && !busy) closeDialog(); }
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", closeOnEscape);
+    return () => { document.body.style.overflow = ""; window.removeEventListener("keydown", closeOnEscape); };
+  }, [dialog, busy]);
+
+  useEffect(() => {
+    const serviceIds = dialog === "move" ? moving?.services.map(item => item.serviceId) ?? [] : serviceId ? [serviceId] : [];
+    if (!serviceIds.length || !barberId || !date) { setSlots([]); return; }
+    let active = true;
+    setSlotsLoading(true); setStartsAt(""); setDialogError("");
+    loadAvailability(serviceIds, barberId, date)
+      .then(data => { if (active) setSlots(data.slots); })
+      .catch(value => { if (active) setDialogError(value instanceof Error ? value.message : "Не удалось загрузить время"); })
+      .finally(() => { if (active) setSlotsLoading(false); });
+    return () => { active = false; };
+  }, [dialog, moving, serviceId, barberId, date]);
+
+  function resetForm() {
+    setServiceId(""); setBarberId(""); setDate(""); setSlots([]); setStartsAt("");
+    setName(""); setPhone(""); setDialogError(""); setMoving(null);
+  }
+  function openCreate() { resetForm(); setDialog("create"); }
+  function openMove(row: AdminBooking) { resetForm(); setMoving(row); setBarberId(row.barber.id); setDialog("move"); }
+  function closeDialog() { if (!busy) { setDialog(null); resetForm(); } }
+
+  async function changeStatus(id: string, status: AdminBooking["status"]) {
+    setChangingStatus(id); setNotice(""); setError("");
+    try {
+      await adminRequest(`/api/v1/admin/bookings/${id}/status`, { method: "POST", body: JSON.stringify({ status }) });
+      setRows(current => current.map(row => row.id === id ? { ...row, status } : row));
+      setNotice("Статус записи обновлён");
+    } catch (value) { setError(value instanceof Error ? value.message : "Не удалось изменить статус"); }
+    finally { setChangingStatus(""); }
+  }
+
+  async function create(event: React.FormEvent) {
+    event.preventDefault(); setBusy(true); setDialogError("");
+    try {
+      await adminRequest("/api/v1/admin/bookings", { method: "POST", body: JSON.stringify({ serviceIds: [serviceId], barberId, startsAt, client: { name: name.trim(), phone } }) });
+      setDialog(null); resetForm(); setNotice("Запись создана"); await load();
+    } catch (value) { setDialogError(value instanceof Error ? value.message : "Не удалось создать запись"); }
+    finally { setBusy(false); }
+  }
+
+  async function reschedule(event: React.FormEvent) {
+    event.preventDefault(); if (!moving || !startsAt) return;
+    setBusy(true); setDialogError("");
+    try {
+      await adminRequest(`/api/v1/admin/bookings/${moving.id}/reschedule`, { method: "PUT", body: JSON.stringify({ barberId, startsAt }) });
+      setDialog(null); resetForm(); setNotice("Запись перенесена"); await load();
+    } catch (value) { setDialogError(value instanceof Error ? value.message : "Не удалось перенести запись"); }
+    finally { setBusy(false); }
+  }
+
+  const eligibleBarbers = barbers.filter(barber => dialog === "move"
+    ? moving?.services.every(service => barber.serviceIds.includes(service.serviceId))
+    : serviceId && barber.serviceIds.includes(serviceId));
+
+  return <>
+    <header className="admin-page-head"><div><span>РАСПИСАНИЕ</span><h1>Записи</h1><p>Последние визиты и актуальный статус клиентов.</p></div><button onClick={openCreate} className="admin-primary"><Plus size={18} /> Новая запись</button></header>
+    {notice && <p className="admin-notice" role="status">{notice}</p>}
+    {error && <p className="admin-error" role="alert">{error}</p>}
+    <section className="admin-panel">{loading ? <div className="admin-state"><LoaderCircle className="spin" />Загрузка записей…</div> : rows.length === 0 ? <div className="admin-empty"><CalendarDays size={30} /><strong>Записей пока нет</strong></div> : <div className="admin-table-wrap"><table><thead><tr><th>Дата</th><th>Клиент</th><th>Услуга</th><th>Мастер</th><th>Статус</th><th>Сумма</th><th aria-label="Действия" /></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td><strong>{new Intl.DateTimeFormat("ru-RU", { timeZone: "Asia/Tashkent", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(row.startsAt))}</strong></td><td>{row.client.name}<small>{row.client.phone}</small></td><td>{row.services.map(service => service.name).join(", ")}</td><td>{row.barber.name}</td><td><select disabled={changingStatus === row.id} value={row.status} onChange={event => void changeStatus(row.id, event.target.value as AdminBooking["status"])} className={`status-${row.status}`}>{Object.entries(statusLabel).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></td><td>{new Intl.NumberFormat("ru-RU").format(row.totalPrice)} сум</td><td>{row.status === "confirmed" && <button className="admin-secondary admin-compact" onClick={() => openMove(row)}>Перенести</button>}</td></tr>)}</tbody></table></div>}</section>
+
+    {dialog && <div className="admin-modal-backdrop" onMouseDown={event => event.target === event.currentTarget && closeDialog()}>
+      <form className="admin-modal admin-booking-modal" onSubmit={dialog === "create" ? create : reschedule} role="dialog" aria-modal="true" aria-labelledby="booking-dialog-title">
+        <header><div><span className="admin-kicker">{dialog === "create" ? "НОВАЯ ЗАПИСЬ" : "ИЗМЕНЕНИЕ ВРЕМЕНИ"}</span><h2 id="booking-dialog-title">{dialog === "create" ? "Добавить клиента" : "Перенести запись"}</h2></div><button type="button" className="admin-modal-close" onClick={closeDialog} aria-label="Закрыть"><X size={20} /></button></header>
+        {dialog === "move" && moving && <div className="admin-modal-summary"><strong>{moving.client.name}</strong><span>{moving.services.map(service => service.name).join(", ")}</span></div>}
+        <div className="admin-form-grid">
+          {dialog === "create" && <label>Услуга<select required value={serviceId} onChange={event => { setServiceId(event.target.value); setBarberId(""); }}><option value="">Выбрать услугу</option>{services.map(service => <option key={service.id} value={service.id}>{service.name} · {service.durationMin} мин</option>)}</select></label>}
+          <label>Мастер<select required value={barberId} disabled={dialog === "create" && !serviceId} onChange={event => setBarberId(event.target.value)}><option value="">Выбрать мастера</option>{eligibleBarbers.map(barber => <option key={barber.id} value={barber.id}>{barber.name}</option>)}</select></label>
+          <label>Дата<input required type="date" min={today()} value={date} onChange={event => setDate(event.target.value)} /></label>
+          <label>Свободное время<select required value={startsAt} disabled={!date || slotsLoading} onChange={event => setStartsAt(event.target.value)}><option value="">{slotsLoading ? "Загружаем…" : slots.length ? "Выбрать время" : "Нет доступных слотов"}</option>{slots.map(slot => <option key={slot.startsAt} value={slot.startsAt}>{slot.time}</option>)}</select></label>
+          {dialog === "create" && <><label>Имя клиента<input required minLength={2} maxLength={60} autoComplete="name" value={name} onChange={event => setName(event.target.value)} placeholder="Например, Азиз" /></label><label>Телефон<input required type="tel" autoComplete="tel" placeholder="+998 90 123 45 67" value={phone} onChange={event => setPhone(event.target.value)} /></label></>}
+        </div>
+        {dialogError && <p className="admin-error" role="alert">{dialogError}</p>}
+        <footer className="admin-modal-actions"><button className="admin-secondary" type="button" onClick={closeDialog} disabled={busy}>Отмена</button><button className="admin-primary" disabled={busy || !startsAt}>{busy ? <><LoaderCircle className="spin" size={17} /> Сохраняем…</> : dialog === "create" ? "Создать запись" : "Сохранить время"}</button></footer>
+      </form>
+    </div>}
   </>;
 }
