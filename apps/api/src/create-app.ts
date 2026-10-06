@@ -13,6 +13,7 @@ import { registerBookingRoutes } from "./booking-routes.js";
 import { telegramUserFromRequest } from "./telegram-auth.js";
 import { createTelegramBot, registerTelegramWebhook } from "./telegram-bot.js";
 import { registerAdminRoutes } from "./admin-routes.js";
+import { jsonSafe } from "./json-safe.js";
 
 const barberParam = z.object({ id: z.string().trim().min(1).max(100) });
 const uuid = z.string().uuid();
@@ -35,6 +36,8 @@ export function buildApp(env: ApiEnv) {
   app.register(cookie);
   app.register(rateLimit, { global: false });
   app.register(multipart, { limits: { fileSize: 8 * 1024 * 1024, files: 1 } });
+
+  app.addHook("preSerialization", async (_request, _reply, payload) => jsonSafe(payload));
 
   app.register(cors, {
     origin(origin, callback) {
