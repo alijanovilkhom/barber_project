@@ -428,7 +428,7 @@ Edge Function `notifications` опубликована и запускается
 
 ## Задачи
 
-- [x] Загрузить репозиторий в GitHub: commit `6793ad8` отправлен в `main`.
+- [x] Загрузить репозиторий в GitHub: commit `86fc7d6` отправлен в `main`.
 - [x] Создать Vercel project для `apps/web`: `bravo-barbershop-web`.
 - [x] Создать Vercel project для `apps/miniapp`: `bravo-barbershop-miniapp`.
 - [x] Создать Vercel project для `apps/api`: `bravo-barbershop-api`.
